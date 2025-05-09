@@ -15,6 +15,7 @@ const FrameContainer = styled.div`
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border: 10px solid #212121;
 `;
 
 const StatusBarImage = styled.img`

@@ -1,10 +1,14 @@
 import styled from '@emotion/styled';
 import { useState, useRef, useEffect } from 'react';
+import AtlasChatHeader from '../../assets/Atlas Chat-window header.svg';
+import { fetchAIAnswer } from '../../utils/ai';
 
 interface AtlasModalProps {
   isVisible: boolean;
   onClose: () => void;
   placeName: string;
+  reviews?: Array<{ text: string }>;
+  placeDetails: Record<string, any>;
 }
 
 const Overlay = styled.div<{ isVisible: boolean }>`
@@ -27,7 +31,7 @@ const Container = styled.div<{ isVisible: boolean }>`
   right: 0;
   background: white;
   border-radius: 20px 20px 0 0;
-  height: 70%;
+  height: 40vh;
   transform: translateY(${props => props.isVisible ? '0' : '100%'});
   transition: transform 0.3s ease-in-out;
   z-index: 1001;
@@ -36,17 +40,20 @@ const Container = styled.div<{ isVisible: boolean }>`
 `;
 
 const Header = styled.div`
-  padding: 20px;
+  padding: 0 0 10px 0;
   border-bottom: 1px solid #eee;
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
 `;
 
-const Title = styled.h2`
-  margin: 0;
-  font-size: 18px;
-  color: #000;
+const HeaderImage = styled.img`
+  display: block;
+  height: 22px;
+  margin-left: 20px;
+  margin-top: 10px;
 `;
 
 const CloseButton = styled.button`
@@ -56,12 +63,19 @@ const CloseButton = styled.button`
   color: #666;
   cursor: pointer;
   padding: 0;
+  padding-right: 20px;
+  padding-top: 10px;
 `;
 
 const Content = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Webkit */
+  }
 `;
 
 const Summary = styled.div`
@@ -133,38 +147,42 @@ const MessageBubble = styled.div<{ isUser?: boolean }>`
   line-height: 1.4;
 `;
 
-const AtlasModal: React.FC<AtlasModalProps> = ({ isVisible, onClose, placeName }) => {
+const AtlasModal: React.FC<AtlasModalProps> = ({ isVisible, onClose, placeName, reviews = [], placeDetails }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Array<{ text: string; isUser: boolean }>>([]);
+  const [loading, setLoading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isVisible) {
-      setMessages([{
-        text: `Here's a summary of reviews for ${placeName}:\n\n` +
-              '• Excellent service and atmosphere\n' +
-              '• Clean and well-maintained facilities\n' +
-              '• Friendly and professional staff\n' +
-              '• Reasonable pricing for the quality\n\n' +
-              'Feel free to ask any specific questions!',
-        isUser: false
-      }]);
+      setMessages([
+        {
+          text: '', // No summary or reviews in chat window
+          isUser: false,
+        },
+      ]);
     }
-  }, [isVisible, placeName]);
+  }, [isVisible]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-
-    setMessages(prev => [...prev, { text: input, isUser: true }]);
+  const handleSend = async () => {
+    if (!input.trim() || loading) return;
+    const question = input;
+    setMessages(prev => [...prev, { text: question, isUser: true }]);
     setInput('');
-
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        text: "Based on customer reviews, I can help answer that. What specific aspect would you like to know more about?",
-        isUser: false
-      }]);
-    }, 1000);
+    setLoading(true);
+    try {
+      const answer = await fetchAIAnswer(
+        placeName,
+        reviews.map(r => r.text),
+        question,
+        placeDetails
+      );
+      setMessages(prev => [...prev, { text: answer, isUser: false }]);
+    } catch {
+      setMessages(prev => [...prev, { text: "Sorry, I couldn't get an answer from Atlas right now.", isUser: false }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -178,12 +196,26 @@ const AtlasModal: React.FC<AtlasModalProps> = ({ isVisible, onClose, placeName }
       <Overlay isVisible={isVisible} onClick={onClose} />
       <Container isVisible={isVisible}>
         <Header>
-          <Title>Atlas AI</Title>
+          <HeaderImage src={AtlasChatHeader} alt="Atlas AI" />
           <CloseButton onClick={onClose}>×</CloseButton>
         </Header>
         
         <Content ref={contentRef}>
-          {messages.map((message, index) => (
+          {isVisible && (
+            <div style={{
+              background: '#f3f6fb',
+              borderRadius: 12,
+              padding: '14px 16px',
+              marginBottom: 18,
+              color: '#2d3a4a',
+              fontSize: 14,
+              textAlign: 'center',
+              fontWeight: 500
+            }}>
+              Hi! I'm Atlas, your AI guide. I can instantly summarize reviews, answer questions, and help you get the most out of any place you find on the map. Ask me anything about this location!
+            </div>
+          )}
+          {messages.filter(m => m.text).map((message, index) => (
             <Message key={index} isUser={message.isUser}>
               <MessageBubble isUser={message.isUser}>
                 {message.text}
@@ -199,8 +231,9 @@ const AtlasModal: React.FC<AtlasModalProps> = ({ isVisible, onClose, placeName }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            disabled={loading}
           />
-          <SendButton onClick={handleSend}>Send</SendButton>
+          <SendButton onClick={handleSend} disabled={loading}>Send</SendButton>
         </InputContainer>
       </Container>
     </>

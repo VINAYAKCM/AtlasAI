@@ -95,3 +95,5 @@ input {
     background-color: #f9f9f9;
   }
 }
+
+/* Remove Google Places Autocomplete custom styles - revert to default */
