@@ -43,7 +43,7 @@ PROMPT_TEMPLATE = (
     "- Structure your summary so a new visitor can quickly grasp the general feeling and key points about the place.\n"
     "- Do NOT use any Markdown, asterisks, bullet points, or formatting symbols.\n"
     "- Write in clean, well-structured paragraphs only.\n"
-    "- Split the summary into short, clear paragraphs with line breaks between them.\n"
+    "- Split the summary into exactly two short, clear paragraphs with a line break between them.\n"
     "- Keep the summary concise and not too long; users prefer brief, easy-to-read text.\n"
     "\nReviews:\n{reviews}\n\nSummary:"
 )

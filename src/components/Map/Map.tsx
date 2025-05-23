@@ -102,7 +102,7 @@ const ProfileCircle = styled.img`
   height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  margin-left: 30px;
+  margin-left: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.10);
   background: #eee;
 `;

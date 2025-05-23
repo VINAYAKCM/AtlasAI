@@ -5,13 +5,15 @@ import Island from '../../assets/Island.svg';
 
 interface FrameProps {
   children: ReactNode;
+  width?: number;
+  height?: number;
 }
 
-const FrameContainer = styled.div`
-  width: 390px;
-  height: 844px;
+const FrameContainer = styled.div<{ width: number; height: number }>`
+  width: ${({ width }) => width}px;
+  height: ${({ height }) => height}px;
   background: white;
-  border-radius: 55px;
+  border-radius: ${({ width }) => width / 7}px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
@@ -44,9 +46,9 @@ const ContentContainer = styled.div`
   left: 0;
 `;
 
-const Frame: React.FC<FrameProps> = ({ children }) => {
+const Frame: React.FC<FrameProps> = ({ children, width = 390, height = 844 }) => {
   return (
-    <FrameContainer>
+    <FrameContainer width={width} height={height}>
       <ContentContainer>
         {children}
       </ContentContainer>
